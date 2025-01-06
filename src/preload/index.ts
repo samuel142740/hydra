@@ -130,6 +130,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("deleteGameFolder", gameId),
   getGameByObjectId: (objectId: string) =>
     ipcRenderer.invoke("getGameByObjectId", objectId),
+  resetGameAchievements: (gameId: number) =>
+    ipcRenderer.invoke("resetGameAchievements", gameId),
   onGamesRunning: (
     cb: (
       gamesRunning: Pick<GameRunning, "id" | "sessionDurationInMillis">[]
@@ -145,6 +147,12 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on("on-library-batch-complete", listener);
     return () =>
       ipcRenderer.removeListener("on-library-batch-complete", listener);
+  },
+  onAchievementUnlocked: (cb: () => void) => {
+    const listener = (_event: Electron.IpcRendererEvent) => cb();
+    ipcRenderer.on("on-achievement-unlocked", listener);
+    return () =>
+      ipcRenderer.removeListener("on-achievement-unlocked", listener);
   },
 
   /* Hardware */

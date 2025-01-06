@@ -1,9 +1,7 @@
 export const parseLaunchOptions = (params: string | null): string[] => {
-  if (params == null || params == "") {
+  if (!params) {
     return [];
   }
 
-  const paramsSplit = params.split(" ");
-
-  return paramsSplit;
+  return params.split(" ");
 };

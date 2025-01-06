@@ -122,7 +122,7 @@ declare global {
       ) => void
     ) => () => Electron.IpcRenderer;
     onLibraryBatchComplete: (cb: () => void) => () => Electron.IpcRenderer;
-
+    resetGameAchievements: (gameId: number) => Promise<void>;
     /* User preferences */
     getUserPreferences: () => Promise<UserPreferences | null>;
     updateUserPreferences: (
@@ -133,6 +133,7 @@ declare global {
       minimized: boolean;
     }) => Promise<void>;
     authenticateRealDebrid: (apiToken: string) => Promise<RealDebridUser>;
+    onAchievementUnlocked: (cb: () => void) => () => Electron.IpcRenderer;
 
     /* Download sources */
     putDownloadSource: (

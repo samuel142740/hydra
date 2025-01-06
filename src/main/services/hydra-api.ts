@@ -32,7 +32,8 @@ export class HydraApi {
   private static readonly EXPIRATION_OFFSET_IN_MS = 1000 * 60 * 5; // 5 minutes
   private static readonly ADD_LOG_INTERCEPTOR = true;
 
-  private static secondsToMilliseconds = (seconds: number) => seconds * 1000;
+  private static readonly secondsToMilliseconds = (seconds: number) =>
+    seconds * 1000;
 
   private static userAuth: HydraApiUserAuth = {
     authToken: "",
@@ -153,7 +154,8 @@ export class HydraApi {
         (error) => {
           logger.error(" ---- RESPONSE ERROR -----");
           const { config } = error;
-          const data = JSON.parse(config.data);
+
+          const data = JSON.parse(config.data ?? null);
 
           logger.error(
             config.method,
@@ -174,14 +176,22 @@ export class HydraApi {
               error.response.status,
               error.response.data
             );
-          } else if (error.request) {
-            const errorData = error.toJSON();
-            logger.error("Request error:", errorData.message);
-          } else {
-            logger.error("Error", error.message);
+
+            return Promise.reject(error as Error);
           }
-          logger.error(" ----- END RESPONSE ERROR -------");
-          return Promise.reject(error);
+
+          if (error.request) {
+            const errorData = error.toJSON();
+            logger.error("Request error:", errorData.code, errorData.message);
+            return Promise.reject(
+              new Error(
+                `Request failed with ${errorData.code} ${errorData.message}`
+              )
+            );
+          }
+
+          logger.error("Error", error.message);
+          return Promise.reject(error as Error);
         }
       );
     }
@@ -261,7 +271,7 @@ export class HydraApi {
     };
   }
 
-  private static handleUnauthorizedError = (err) => {
+  private static readonly handleUnauthorizedError = (err) => {
     if (err instanceof AxiosError && err.response?.status === 401) {
       logger.error(
         "401 - Current credentials:",
