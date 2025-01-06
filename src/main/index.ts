@@ -9,8 +9,8 @@ import { logger, WindowManager } from "@main/services";
 import { dataSource } from "@main/data-source";
 import resources from "@locales";
 import { userPreferencesRepository } from "@main/repository";
-import { getKnexClient, migrationConfig } from "./knex-client";
-import { databaseDirectory, databasePath } from "./constants";
+import { knexClient, migrationConfig } from "./knex-client";
+import { databaseDirectory } from "./constants";
 import { PythonRPC } from "./services/python-rpc";
 import { Aria2 } from "./services/aria2";
 import { loadState } from "./main";
@@ -56,25 +56,14 @@ const runMigrations = async () => {
     fs.mkdirSync(databaseDirectory, { recursive: true });
   }
 
-  for (let trial = 0; trial < 2; trial++) {
-    const knexClient = getKnexClient();
+  await knexClient.migrate.list(migrationConfig).then((result) => {
+    logger.log(
+      "Migrations to run:",
+      result[1].map((migration) => migration.name)
+    );
+  });
 
-    try {
-      await knexClient.migrate.list(migrationConfig).then((result) => {
-        logger.log(
-          "Migrations to run:",
-          result[1].map((migration) => migration.name)
-        );
-      });
-
-      await knexClient.migrate.latest(migrationConfig);
-      return;
-    } catch (err) {
-      logger.log("Migrations failed to run, deleting db and trying again", err);
-      await knexClient.destroy();
-      fs.rmSync(databasePath);
-    }
-  }
+  await knexClient.migrate.latest(migrationConfig);
 };
 
 // This method will be called when Electron has finished
@@ -88,9 +77,13 @@ app.whenReady().then(async () => {
     return net.fetch(url.pathToFileURL(decodeURI(filePath)).toString());
   });
 
-  await runMigrations().then(() => {
-    logger.log("Migrations executed successfully");
-  });
+  await runMigrations()
+    .then(() => {
+      logger.log("Migrations executed successfully");
+    })
+    .catch((err) => {
+      logger.log("Migrations failed to run:", err);
+    });
 
   await dataSource.initialize();
 

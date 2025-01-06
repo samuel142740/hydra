@@ -49,14 +49,13 @@ class MigrationSource implements Knex.MigrationSource<HydraMigration> {
   }
 }
 
-export const getKnexClient = () =>
-  knex({
-    debug: !app.isPackaged,
-    client: "better-sqlite3",
-    connection: {
-      filename: databasePath,
-    },
-  });
+export const knexClient = knex({
+  debug: !app.isPackaged,
+  client: "better-sqlite3",
+  connection: {
+    filename: databasePath,
+  },
+});
 
 export const migrationConfig: Knex.MigratorConfig = {
   migrationSource: new MigrationSource(),
