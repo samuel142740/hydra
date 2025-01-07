@@ -4,9 +4,12 @@ import { SyncIcon } from "@primer/octicons-react";
 import { Link } from "../link/link";
 import * as styles from "./header.css";
 import type { AppUpdaterEvent } from "@types";
+import { minutesToMilliseconds } from "date-fns";
 
 export const releasesPageUrl =
   "https://github.com/hydralauncher/hydra/releases/latest";
+
+const CHECK_FOR_UPDATES_INTERVAL = minutesToMilliseconds(60);
 
 export function AutoUpdateSubHeader() {
   const [isReadyToInstall, setIsReadyToInstall] = useState(false);
@@ -32,12 +35,21 @@ export function AutoUpdateSubHeader() {
       }
     );
 
-    window.electron.checkForUpdates().then((isAutoInstallAvailable) => {
-      setIsAutoInstallAvailable(isAutoInstallAvailable);
-    });
-
     return () => {
       unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    const checkInterval = setInterval(() => {
+      window.electron.checkForUpdates().then((isAutoInstallAvailable) => {
+        console.log("checking for updates");
+        setIsAutoInstallAvailable(isAutoInstallAvailable);
+      });
+    }, CHECK_FOR_UPDATES_INTERVAL);
+
+    return () => {
+      clearInterval(checkInterval);
     };
   }, []);
 
